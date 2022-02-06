@@ -23,13 +23,21 @@ public class TokenAuthenticationService implements UserAuthenticationService {
     public String login(final String username, final String password) {
         return userRepository.findByEmail(username)
                 .filter(user -> passwordEncoder.matches(password, user.getPassword()))
-                .map(user -> tokenService.expiring(Map.of("username", username)))
+                .map(user -> tokenService.expiring(Map.of("userId", user.getId())))
                 .orElseThrow(() -> new UsernameNotFoundException("invalid login and/or password"));
     }
 
     @Override
     public Optional<User> findByToken(final String token) {
-        return userRepository.findByEmail(tokenService.verify(token).get("username").toString());
+        return userRepository.findById(extractUserId(token));
+    }
+
+    private Long extractUserId(final String token) {
+        final String userId = tokenService.verify(token)
+                .get("userId")
+                .toString();
+
+        return Long.valueOf(userId);
     }
 
 }

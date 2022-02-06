@@ -76,9 +76,16 @@ public class TestUtils {
     }
 
     public ResultActions perform(final MockHttpServletRequestBuilder request, final String byUser) throws Exception {
-        final String token = tokenService.expiring(Map.of("username", byUser));
-        request.header(AUTHORIZATION, token);
+        final Long userId = userRepository.findByEmail(byUser)
+                .map(User::getId)
+                .orElse(null);
+        final String token = tokenService.expiring(Map.of("userId", userId));
+        return performWithToken(request, token);
+    }
 
+    public ResultActions performWithToken(final MockHttpServletRequestBuilder request,
+                                          final String token) throws Exception {
+        request.header(AUTHORIZATION, token);
         return perform(request);
     }
 
